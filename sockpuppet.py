@@ -157,14 +157,16 @@ class SockPuppet:
         # here: https://github.com/snapcore/snapd/wiki/REST-API
         # This follows the 'sideloading' process.
         post_payload = '''
-        --------------------------f8c156143a1caf97
-        Content-Disposition: form-data; name="devmode"
-        true
-        ---------------------------f8c156143a1caf97
-        Content-Disposition: form-data; name="snap"; filename="snap.snap"
-        Content-Type: application/octet-stream
-        ''' + blob.decode('latin-1') + '''
-        --------------------------f8c156143a1caf97--'''
+--------------------------f8c156143a1caf97
+Content-Disposition: form-data; name="devmode"
+
+true
+---------------------------f8c156143a1caf97
+Content-Disposition: form-data; name="snap"; filename="snap.snap"
+Content-Type: application/octet-stream
+
+''' + blob.decode('latin-1') + '''
+--------------------------f8c156143a1caf97--'''
 
         # Multi-part forum uploads are weird. First, we post the headers
         # and wait for an HTTP 100 reply. THEN we can send the payload.
