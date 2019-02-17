@@ -188,7 +188,7 @@ class SockPuppet:
 
         # Now we can send the payload
         http_req2 = post_payload
-        self.sock.sendall(http_req2.encode("latin-1"))
+        self.sock.sendall(http_req2.encode("utf-8"))
 
         # Receive the data and extract the JSON
         http_reply = self.sock.recv(8192).decode("utf-8")
