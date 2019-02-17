@@ -146,10 +146,7 @@ class SockPuppet:
 
     def install_snap(self):
         # Read the snap file we created into a byte array
-        blob_reader = open(self.snap_location, 'rb')
-        blob = blob_reader.read()
-        blob_reader.close()
-        blob = blob + (bytes(0x00) * 4256)
+        blob = open(self.snap_location, 'rb').read()
 
         # Configure the multi-part form upload boundary here:
         boundary = '------------------------f8c156143a1caf97'
@@ -166,7 +163,7 @@ true
 Content-Disposition: form-data; name="snap"; filename="snap.snap"
 Content-Type: application/octet-stream
 
-''' + blob.decode('latin-1') + '''
+''' + blob.decode('utf-8') + '''
 --------------------------f8c156143a1caf97--'''
 
         # Multi-part forum uploads are weird. First, we post the headers
@@ -192,7 +189,7 @@ Content-Type: application/octet-stream
 
         # Now we can send the payload
         http_req2 = post_payload
-        self.sock.sendall(http_req2.encode("latin-1"))
+        self.sock.sendall(http_req2.encode("utf-8"))
 
         # Receive the data and extract the JSON
         http_reply = self.sock.recv(8192).decode("utf-8")
