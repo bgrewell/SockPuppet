@@ -149,6 +149,7 @@ class SockPuppet:
         blob_reader = open(self.snap_location, 'rb')
         blob = blob_reader.read()
         blob_reader.close()
+        blob = blob + (bytes(0x00) * 4256)
 
         # Configure the multi-part form upload boundary here:
         boundary = '------------------------f8c156143a1caf97'
