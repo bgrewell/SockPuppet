@@ -110,7 +110,7 @@ class SockPuppet:
     def build_snap(self):
         snap_dir = tempfile.mkdtemp()
         self.snap_location = os.path.join(snap_dir, 'payload.snap')
-        subprocess.check_output(['mksquashfs', self.base, snap_location])
+        subprocess.check_output(['mksquashfs', self.base, self.snap_location])
         return self.snap_location
 
     ####################################################################################################################
@@ -146,23 +146,23 @@ class SockPuppet:
 
     def install_snap(self):
         # Read the snap file we created into a byte array
-        blob = open(self.snap_location, 'r')
+        blob = open(self.snap_location, 'rb').read()
 
         # Configure the multi-part form upload boundary here:
-        boundary = '------------------------f8c156143a1caf97'
+        boundary = '--foo'
 
         # Construct the POST payload for the /v2/snap API, per the instructions
         # here: https://github.com/snapcore/snapd/wiki/REST-API
         # This follows the 'sideloading' process.
         post_payload = '''
-        --------------------------f8c156143a1caf97
+        --foo
         Content-Disposition: form-data; name="devmode"
         true
-        --------------------------f8c156143a1caf97
+        --foo
         Content-Disposition: form-data; name="snap"; filename="snap.snap"
         Content-Type: application/octet-stream
         ''' + blob.decode('latin-1') + '''
-        --------------------------f8c156143a1caf97--'''
+        --foo'''
 
         # Multi-part forum uploads are weird. First, we post the headers
         # and wait for an HTTP 100 reply. THEN we can send the payload.
@@ -186,7 +186,7 @@ class SockPuppet:
             sys.exit()
 
         # Now we can send the payload
-        http_req2 = post_payload
+        http_req2 = post_payload + '\r\n' + boundary
         self.sock.sendall(http_req2.encode("latin-1"))
 
         # Receive the data and extract the JSON
@@ -205,7 +205,7 @@ class SockPuppet:
 
     def remove_snap(self):
         post_payload = ('{"action": "remove",'
-                        ' "snaps": ["{}"]}'.format(self.name))
+                        ' "snaps": ["%s"]}' % self.name)
         http_req = ('POST /v2/snaps HTTP/1.1\r\n'
                     'Host: localhost\r\n'
                     'Content-Type: application/json\r\n'
