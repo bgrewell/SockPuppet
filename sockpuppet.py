@@ -46,6 +46,7 @@ class SockPuppet:
         self.summary = summary
         self.description = description
         self.base = base_dir
+        os.chmod(base_dir, 0o775)
 
     def build_yaml(self):
         SNAP_TEMPLATE = """
