@@ -151,7 +151,7 @@ class SockPuppet:
         blob_reader.close()
 
         # Configure the multi-part form upload boundary here:
-        boundary = '--foo'
+        boundary = 'foo'
 
         # Construct the POST payload for the /v2/snap API, per the instructions
         # here: https://github.com/snapcore/snapd/wiki/REST-API
