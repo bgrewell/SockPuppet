@@ -151,20 +151,20 @@ class SockPuppet:
         blob_reader.close()
 
         # Configure the multi-part form upload boundary here:
-        boundary = 'foo'
+        boundary = '------------------------f8c156143a1caf97'
 
         # Construct the POST payload for the /v2/snap API, per the instructions
         # here: https://github.com/snapcore/snapd/wiki/REST-API
         # This follows the 'sideloading' process.
         post_payload = '''
-        --foo
+        --------------------------f8c156143a1caf97
         Content-Disposition: form-data; name="devmode"
         true
-        --foo
+        ---------------------------f8c156143a1caf97
         Content-Disposition: form-data; name="snap"; filename="snap.snap"
         Content-Type: application/octet-stream
         ''' + blob.decode('latin-1') + '''
-        --foo--'''
+        --------------------------f8c156143a1caf97--'''
 
         # Multi-part forum uploads are weird. First, we post the headers
         # and wait for an HTTP 100 reply. THEN we can send the payload.
