@@ -159,7 +159,7 @@ class SockPuppet:
 Content-Disposition: form-data; name="devmode"
 
 true
----------------------------f8c156143a1caf97
+--------------------------f8c156143a1caf97
 Content-Disposition: form-data; name="snap"; filename="snap.snap"
 Content-Type: application/octet-stream
 
