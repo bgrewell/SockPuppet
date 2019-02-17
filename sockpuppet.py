@@ -99,8 +99,8 @@ class SockPuppet:
         print("[+] Successfully created the file %s" % filename)
 
     def write_install(self, contents):
-        filenames = [os.path.join(self.base, os.path.join('meta', 'hooks', 'install')),  # Default install hook location
-                     os.path.join(self.base, os.path.join('snap', 'hooks', 'install'))]  # Needed for building with snapcraft. #TODO: Test removing this second location
+        filenames = [os.path.join(self.base, os.path.join('meta', 'hooks', 'install'))]#,  # Default install hook location
+                     #os.path.join(self.base, os.path.join('snap', 'hooks', 'install'))]  # Needed for building with snapcraft. #TODO: Test removing this second location
         for filename in filenames:
             f = open(filename, 'w')
             f.write(contents)
