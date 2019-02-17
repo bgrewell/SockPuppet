@@ -187,7 +187,7 @@ class SockPuppet:
             sys.exit()
 
         # Now we can send the payload
-        http_req2 = post_payload + '\r\n' + boundary
+        http_req2 = post_payload
         self.sock.sendall(http_req2.encode("latin-1"))
 
         # Receive the data and extract the JSON
