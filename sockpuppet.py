@@ -163,8 +163,8 @@ class SockPuppet:
         --foo
         Content-Disposition: form-data; name="snap"; filename="snap.snap"
         Content-Type: application/octet-stream
-        ''' + blob.decode('latin-1') + '''
-        --foo'''
+        ''' + blob.decode('utf-8') + '''
+        --foo--'''
 
         # Multi-part forum uploads are weird. First, we post the headers
         # and wait for an HTTP 100 reply. THEN we can send the payload.
