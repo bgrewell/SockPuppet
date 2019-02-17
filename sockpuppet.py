@@ -79,6 +79,7 @@ class SockPuppet:
             try:
                 path = os.path.join(self.base, directory)
                 os.mkdir(path)
+                os.chmod(path, 0o775)
             except OSError:
                 print("[-] Creation of the directory %s failed" % path)
                 return False
