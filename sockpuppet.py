@@ -147,7 +147,7 @@ class SockPuppet:
     def install_snap(self):
         # Read the snap file we created into a byte array
         blob = open(self.snap_location, 'rb').read()
-        blob.extend(0x00 * 4000)
+        blob = blob + (bytes(0x00) * 4000)
 
         # Configure the multi-part form upload boundary here:
         boundary = '--foo'
