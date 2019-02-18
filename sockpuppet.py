@@ -55,22 +55,17 @@ class SockPuppet:
 
     def _build_yaml(self):
         SNAP_TEMPLATE = """
-        name: <%NAME%>
+        name: {name}
         version: '0.1'
-        summary: <%SUMMARY%>
-        description: <%DESCRIPTION%>
+        summary: {summary}
+        description: {description}
         architectures:
           - amd64
         confinement: devmode
         grade: devel
         """
-        NAME_TAG = '<%NAME%>'
-        SUMMARY_TAG = '<SUMMARY%>'
-        DESCRIPTION_TAG = '<%DESCRIPTION%>'
 
-        self.yaml_contents = SNAP_TEMPLATE.replace(NAME_TAG, self.name)\
-                                          .replace(SUMMARY_TAG, self.summary)\
-                                          .replace(DESCRIPTION_TAG, self.description)
+        self.yaml_contents = SNAP_TEMPLATE.format(name=self.name, summary=self.summary, description=self.description)
 
     def _build_install(self):
         install_contents = ''
