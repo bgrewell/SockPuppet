@@ -29,6 +29,7 @@ def parse_arguments():
         args.payload = default_command
     return args
 
+
 class SockPuppet:
     ####################################################################################################################
     # Section: Code related to building the snap which carries the payload
