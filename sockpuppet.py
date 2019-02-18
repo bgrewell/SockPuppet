@@ -134,14 +134,11 @@ class SockPuppet:
         sock.bind(dirtysock)
         return sock
 
-    def _connect_to_api(self, sock):
-        print("[+] Connecting to snapd API")
-        sock.connect('/run/snapd.socket')
-
     def _connect_to_api(self):
         dirtysock = self._create_unix_socket()
         self.sock = self._bind_unix_socket(dirtysock)
-        self._connect_to_api(self.sock)
+        print("[+] Connecting to snapd API")
+        sock.connect('/run/snapd.socket')
 
     def _install_snap(self):
         # Read the snap file we created into a byte array
