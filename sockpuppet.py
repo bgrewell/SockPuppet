@@ -39,16 +39,18 @@ class SockPuppet:
     name = ''
     summary = ''
     description = ''
+    uid = ''
     base = ''
     sock = None
     snap_location = ''
     install_contents = ''
     yaml_contents = ''
 
-    def __init__(self, base_dir, payload, name='sock-puppet', summary='empty snap', description=''):
+    def __init__(self, base_dir, payload, uid, name='sock-puppet', summary='empty snap', description=''):
         self.name = name
         self.summary = summary
         self.description = description
+        self.uid = uid
         self.base = base_dir
         os.chmod(base_dir, 0o775)
         self.payload = payload
@@ -124,7 +126,7 @@ class SockPuppet:
         return True     # TODO: Implement
 
     def _create_unix_socket(self):
-        dirtysock = tempfile.mktemp(suffix=';uid=0;')
+        dirtysock = tempfile.mktemp(suffix=';uid={};'.format(self.uid))
         print("[+] Creating dirtysock file at %s" % dirtysock)
         return dirtysock
 
