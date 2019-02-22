@@ -59,7 +59,7 @@ def run_server():
     # Build authentication
     auth_string = ";".join(['pid=' + str(pid),
                             'uid=' + str(uid),
-                            'socket=' + remote_addr])
+                            'socket=' + str(remote_addr)])
     parse_authentication(auth_string)
 
     # Receive the data and echo it back
