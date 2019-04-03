@@ -263,7 +263,7 @@ if __name__ == '__main__':
     output_dir = tempfile.mkdtemp()
 
     # Create sockpuppet instance
-    sockpuppet = SockPuppet(output_dir, arguments.payload)
+    sockpuppet = SockPuppet(output_dir, arguments.payload, arguments.uid)
 
     # Execute
     sockpuppet.execute()
